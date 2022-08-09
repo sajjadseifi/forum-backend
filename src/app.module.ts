@@ -6,6 +6,7 @@ import { JwtModule } from './jwt/jwt.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './typeorm.config';
 import { HelperModule } from './helper/helper.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HelperModule } from './helper/helper.module';
     UserModule,
     AuthModule,
     HelperModule,
+    CategoryModule,
   ],
   controllers: [],
   providers: [AppService],

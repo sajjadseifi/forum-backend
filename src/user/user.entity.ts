@@ -1,8 +1,9 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import { CoreEntity } from 'src/common/entity/core.entity';
 import { Exclude } from 'class-transformer';
 import { InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Category } from 'src/category/category.entity';
 
 @Entity()
 export class User extends CoreEntity {
@@ -33,6 +34,9 @@ export class User extends CoreEntity {
     nullable: true,
   })
   birthDate: Date;
+
+  @OneToMany(() => Category, (c) => c.user)
+  categories: Category[];
 
   @BeforeInsert()
   @BeforeUpdate()
