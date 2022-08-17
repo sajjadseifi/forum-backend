@@ -1,5 +1,8 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Category } from './category/category.entity';
+import { Forum } from './forum/forum.entity';
+import { Posts } from './post/post.entity';
+import { Topic } from './topic/topic.entity';
 import { User } from './user/user.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
@@ -9,6 +12,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: 'postgres',
   password: '1204',
   database: 'forum',
-  entities: [User, Category],
+  entities: [User, Category, Forum, Topic, Posts],
   synchronize: true,
 };

@@ -1,9 +1,20 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { CoreEntity } from 'src/common/entity/core.entity';
 import { Exclude } from 'class-transformer';
 import { InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Category } from 'src/category/category.entity';
+import { Forum } from 'src/forum/forum.entity';
+import { Topic } from 'src/topic/topic.entity';
+import { Posts } from 'src/post/post.entity';
 
 @Entity()
 export class User extends CoreEntity {
@@ -37,6 +48,18 @@ export class User extends CoreEntity {
 
   @OneToMany(() => Category, (c) => c.user)
   categories: Category[];
+
+  @OneToMany(() => Forum, (f) => f.user)
+  forums: Forum[];
+
+  @OneToMany(() => Topic, (t) => t.user)
+  topics: Topic[];
+
+  @OneToMany(() => Posts, (p) => p.user)
+  posts: Posts[];
+
+  @ManyToMany(() => Topic, (t) => t.topiclikedUsers)
+  userlikesTpic: Topic[];
 
   @BeforeInsert()
   @BeforeUpdate()

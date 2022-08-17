@@ -11,7 +11,6 @@ export class JwtMiddleware implements NestMiddleware {
   ) {}
   async use(req: any, res: any, next: (error?: any) => void) {
     req[AUTH_USER] = null;
-
     if (!req.headers[ACCESS_TOKEN]) return next();
 
     try {
