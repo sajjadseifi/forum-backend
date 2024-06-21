@@ -1,8 +1,12 @@
+import { HttpServer, Req } from '@nestjs/common';
+import { PartialType, PickType } from '@nestjs/mapped-types';
 import { Exclude } from 'class-transformer';
 import { Category } from 'src/category/category.entity';
 import { CoreEntity } from 'src/common/entity/core.entity';
 import { countRepository } from 'src/common/repository/counts-repository';
+import { app } from 'src/main';
 import { Topic } from 'src/topic/topic.entity';
+import { UserRole } from 'src/user/entity/user-role.entity';
 import { User } from 'src/user/user.entity';
 import {
   AfterLoad,
@@ -17,6 +21,9 @@ import {
   OneToMany,
 } from 'typeorm';
 
+class AccessEntity extends PartialType(
+  PickType(UserRole, ['canCreate', 'canRead', 'canUpdate', 'canDelete']),
+) {}
 @Entity()
 export class Forum extends CoreEntity {
   @Column()
@@ -29,16 +36,14 @@ export class Forum extends CoreEntity {
   parentForumId: string;
 
   @ManyToOne(() => User, (u) => u.forums)
-  @JoinColumn()
-  @Exclude()
+  @JoinTable()
   user: User;
 
   @ManyToOne(() => Category, (f) => f.forums)
   @JoinTable()
-  category: Category;
+  category?: Category;
 
   @OneToMany(() => Topic, (t) => t.forum)
-  @JoinTable()
   topics: Topic[];
 
   subForums?: Forum[];
@@ -50,9 +55,18 @@ export class Forum extends CoreEntity {
   topicCounts?: number;
   topicNestedCounts?: number;
 
+  parentForum?: Forum;
+
+  access?: AccessEntity;
   @AfterLoad()
   async checkIsSubForum() {
     this.isSubForum = !!this.parentForumId;
+    if (this.isSubForum) {
+      this.parentForum = await getRepository(Forum).findOne({
+        select: ['id', 'title'],
+        where: { id: this.parentForumId },
+      });
+    }
   }
 
   @AfterLoad()
@@ -108,5 +122,15 @@ export class Forum extends CoreEntity {
       take: count,
     });
     return this.topics;
+  }
+
+  // @AfterLoad()
+  async userAccess(userId: string) {
+    const user = await getRepository(User).findOne({
+      where: {
+        id: userId,
+      },
+      relations: ['roles'],
+    });
   }
 }

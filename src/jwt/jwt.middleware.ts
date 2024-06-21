@@ -17,13 +17,12 @@ export class JwtMiddleware implements NestMiddleware {
       const decoded = this.jwtService.verify(req.headers[ACCESS_TOKEN]);
       const userId: string = decoded['userId'];
 
-      const user = await this.ueserService.getUserById(userId);
+      const user = await this.ueserService.getUserById(userId, true);
       req[AUTH_USER] = user && {
         ...user,
         isForgetPassword: !!decoded['isForgetPassword'],
       };
     } catch (error) {
-      console.log(error);
     } finally {
       next();
     }

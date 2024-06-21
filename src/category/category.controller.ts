@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthUser } from 'src/auth/auth.decorator';
 import { AuthenticatedGard } from 'src/auth/auth.gard';
+import { Role } from 'src/auth/role.decorator';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { ResponseDto } from 'src/common/dto/response.dto';
 import { HelperService } from 'src/helper/helper.service';
@@ -18,7 +20,6 @@ import { User } from 'src/user/user.entity';
 import { CategoryOwnerGard } from './category.gard';
 import { CategoryService } from './category.service';
 import { CreateCategoryDTO } from './dto/create-category.dto';
-import { DeleteCategoryOutput } from './dto/delete-category.dto';
 import {
   UpdateCategoryDTO,
   UpdateCategoryOutput,
@@ -26,6 +27,7 @@ import {
 
 @Controller('category')
 @UseGuards(AuthenticatedGard)
+@Role(['CATEGORY'])
 export class CategoryController {
   constructor(
     private readonly categoryService: CategoryService,
@@ -36,9 +38,13 @@ export class CategoryController {
   getCategoryPaginate(@Query() filterCategoryDto: FilterDto) {
     return this.categoryService.getByPagination(filterCategoryDto);
   }
+  @Get('/all')
+  getCategoryAll() {
+    return this.categoryService.getAll();
+  }
 
   @Get('/:categoryId')
-  getCategory(@Param('categoryId') categoryId: string) {
+  getCategory(@Param('categoryId', ParseUUIDPipe) categoryId: string) {
     return this.categoryService.getCategory(categoryId);
   }
 
@@ -70,7 +76,6 @@ export class CategoryController {
   }
 
   @Put('/:categoryId')
-  @UseGuards(CategoryOwnerGard)
   async updateCategory(
     @Param('categoryId') categoryId: string,
     @Body() updateCategoryDTO: UpdateCategoryDTO,
@@ -91,20 +96,21 @@ export class CategoryController {
   }
 
   @Delete('/:categoryId')
-  @UseGuards(CategoryOwnerGard)
   async deleteCategory(@Param('categoryId') categoryId: string) {
-    const [deleted, category] = await this.categoryService.deleteCategoryByID(
-      categoryId,
-    );
-    const collection = this.helperService.messageCollectionGen();
+    // const [deleted, category] = await this.categoryService.deleteCategoryByID(
+    //   categoryId,
+    // );
+    // const collection = this.helperService.messageCollectionGen();
 
-    if (deleted) {
-      collection.setMessage('دسته بندی با موفقیت حذف شد');
-    } else {
-      collection.setMessage('حذف دسته بندی با خطا مواجه شد');
-    }
+    // if (deleted) {
+    //   collection.setMessage('دسته بندی با موفقیت حذف شد');
+    // } else {
+    //   collection.setMessage('حذف دسته بندی با خطا مواجه شد');
+    // }
 
-    return new DeleteCategoryOutput(collection.messages, category);
+    // return new DeleteCategoryOutput(collection.messages, category);
+
+    return this.categoryService.deleteCategoryByID(categoryId);
   }
 
   @Delete('/:categoryName/name')

@@ -9,13 +9,15 @@ export class LoginDTO extends PickType(RegisterAuthDTO, [
 
 export class LoginOutputDTO extends ResponseDto {
   accessToken?: string;
+  activated?: boolean;
 
-  constructor(data: string | string[]) {
+  constructor(data: string | string[], activated?: boolean) {
     if (data instanceof Array) {
       super(false, data);
     } else {
       super(false);
       this.accessToken = data;
     }
+    this.activated = !!activated;
   }
 }

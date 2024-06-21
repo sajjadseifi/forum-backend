@@ -2,19 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { LikeFlag } from 'src/common/dto/like.dto';
+import { paginationResult } from 'src/common/filter/pagination';
 import { countRepository } from 'src/common/repository/counts-repository';
 import { ForumService } from 'src/forum/forum.service';
 import { User } from 'src/user/user.entity';
-import { createQueryBuilder, getConnection, Like, Repository } from 'typeorm';
+import {
+  createQueryBuilder,
+  getConnection,
+  In,
+  Like,
+  Repository,
+} from 'typeorm';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import { Topic } from './topic.entity';
+import { Posts } from '../post/post.entity';
 
 @Injectable()
 export class TopicService {
   constructor(
     @InjectRepository(Topic)
     private readonly topicRepository: Repository<Topic>,
+    @InjectRepository(Posts)
+    private readonly postRepository: Repository<Posts>,
     private readonly forumService: ForumService,
   ) {}
 
@@ -25,7 +35,7 @@ export class TopicService {
 
     const topic = await this.topicRepository.findOne({
       where,
-      relations: ['forum'],
+      relations: ['forum', 'user'],
     });
 
     if (error !== false && !topic) {
@@ -36,7 +46,17 @@ export class TopicService {
 
     return topic;
   }
-  async getTopicsByFilter(filterDto: FilterDto, forumID?: string) {
+  async getTopicIsForums(filterDto: FilterDto, forumsId: string[]) {
+    if (!forumsId.length) {
+      return this.getTopicsByFilter({} as User, filterDto);
+    }
+    return this.getTopicsByFilter({} as User, filterDto, forumsId);
+  }
+  async getTopicsByFilter(
+    user: User,
+    filterDto: FilterDto,
+    forumID?: string | string[],
+  ) {
     const where: any[] = [];
 
     if (filterDto.search) {
@@ -45,23 +65,29 @@ export class TopicService {
       where.push({ title });
       where.push({ content });
     }
-
+    const relations = ['user'];
     if (forumID) {
-      const forum = await this.forumService.getForumByID(forumID);
-      new Array(where.length).forEach((_, i) => (where[i].forum = forum));
+      const forumsIn = typeof forumID === 'string' ? [forumID] : forumID;
+      if (forumsIn.length) {
+        new Array(where.length).forEach(
+          (_, i) => (where[i].forum = In(forumsIn)),
+        );
+      }
+    } else {
+      relations.push('forum');
     }
 
     const result = await this.topicRepository.findAndCount({
       where,
       skip: filterDto.offset,
       take: filterDto.limit,
+      relations,
     });
+    for (let index = 0; user && index < result[0].length; index++) {
+      await result[0][index].userLikedThis(user.id);
+    }
 
-    return {
-      topics: result[0],
-      counts: result[0].length,
-      countsAll: result[1],
-    };
+    return paginationResult(result[0], result[1], filterDto);
   }
   async createTopic(
     forumID: string,
@@ -92,7 +118,9 @@ export class TopicService {
 
   async deleteTopic(topicId: string) {
     const topic = await this.getTopicById(topicId);
-
+    const deletePosts = await this.postRepository.delete({
+      topic,
+    });
     const result = await this.topicRepository.delete(topicId);
 
     return {
@@ -133,5 +161,17 @@ export class TopicService {
   async seenTopic(topicId: string) {
     const topic = await this.getTopicById(topicId);
     await topic.seenedByUser();
+  }
+
+  async getUserTopics(userId: string, filterDto: FilterDto) {
+    const result = await this.topicRepository.findAndCount({
+      where: {
+        user: userId,
+      },
+      skip: filterDto.offset,
+      take: filterDto.limit,
+      relations: ['forum', 'user'],
+    });
+    return paginationResult(result[0], result[1], filterDto);
   }
 }

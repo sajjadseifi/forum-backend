@@ -12,7 +12,6 @@ export class CategoryOwnerGard implements CanActivate {
     const req: Request = context.switchToHttp().getRequest();
     const user: User = req[AUTH_USER];
     const categoryId = req.params.categoryId;
-    console.log(req.params);
     const isOwner = await this.categoryService.isOwnerCateory(user, categoryId);
     return isOwner;
   }

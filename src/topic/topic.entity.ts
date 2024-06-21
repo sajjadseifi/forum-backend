@@ -7,6 +7,7 @@ import { User } from 'src/user/user.entity';
 import {
   AfterLoad,
   Column,
+  createQueryBuilder,
   Entity,
   getConnection,
   getRepository,
@@ -27,7 +28,7 @@ export class Topic extends CoreEntity {
   @Column({ default: 0 })
   seen: number;
 
-  @ManyToOne(() => Forum, (f) => f.topics)
+  @ManyToOne(() => Forum, (f) => f.topics, { nullable: true })
   @JoinTable()
   forum: Forum;
 
@@ -45,6 +46,7 @@ export class Topic extends CoreEntity {
   topiclikedUsers: User[];
 
   likesCounts?: number;
+  liked?: boolean;
 
   @AfterLoad()
   async loadPostCounts() {
@@ -75,5 +77,19 @@ export class Topic extends CoreEntity {
       skip: offset,
     });
     return posts;
+  }
+
+  async userLikedThis(userId: string) {
+    const query = createQueryBuilder('user_like_topic', 't').where(
+      't.userId = :userId AND t.topicId = :topicId',
+      { userId, topicId: this.id },
+    );
+
+    const result: any[] = await getConnection().query(query.getSql(), [
+      userId,
+      this.id,
+    ]);
+
+    this.liked = result.length > 0;
   }
 }

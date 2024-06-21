@@ -14,7 +14,6 @@ export class FilterDto {
   @IsNotEmpty()
   size: number;
 
-  @IsNotEmpty()
   @IsString()
   @IsOptional()
   search?: string;

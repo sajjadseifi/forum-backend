@@ -13,31 +13,47 @@ import { User } from './user/user.entity';
 import { ForumModule } from './forum/forum.module';
 import { TopicModule } from './topic/topic.module';
 import { PostModule } from './post/post.module';
-
+import { UserRole } from './user/entity/user-role.entity';
+import { MailModule } from './mail/mail.module';
+import { ConfigModule } from '@nestjs/config';
+// import { InboxModule } from './inbox/inbox.module';
+import { InboxModule } from './inbox/inbox.module';
+import { ContactModule } from './contact/contact.module';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot(typeOrmConfig),
     JwtModule.forRoot({
-      privateKey: 'pFGLCb3hclmW7h9ial2QNV9jfOzZ7194',
+      privateKey: process.env.JWT_PRIVATEKEY,
     }),
     UserModule,
     AuthModule,
     HelperModule,
     CategoryModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserRole]),
     ForumModule,
     TopicModule,
     PostModule,
+    MailModule,
+    InboxModule,
+    ContactModule,
+    // InboxModule,
   ],
   controllers: [],
 
   providers: [AppService, UserService],
 })
 export class AppModule {
+  constructor(private readonly userService: UserService) {}
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(JwtMiddleware).forRoutes({
       path: '/**',
       method: RequestMethod.ALL,
     });
+  }
+  onModuleInit() {
+    this.userService.createRootAdmin();
   }
 }

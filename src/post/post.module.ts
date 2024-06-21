@@ -9,9 +9,13 @@ import { Topic } from 'src/topic/topic.entity';
 import { ForumService } from 'src/forum/forum.service';
 import { CategoryService } from 'src/category/category.service';
 import { Posts } from './post.entity';
+import { User } from 'src/user/user.entity';
+import { LikePost } from './like-post.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category, Topic, Forum, Posts])],
+  imports: [
+    TypeOrmModule.forFeature([Category, Topic, Forum, Posts, User, LikePost]),
+  ],
   providers: [PostService, ForumService, CategoryService, TopicService],
   controllers: [PostController],
 })

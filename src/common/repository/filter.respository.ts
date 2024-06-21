@@ -14,6 +14,7 @@ export const filterRepository = async <T>(
   filterDto: FilterDto,
   where: ObjectLiteral | FindConditions<T> | FindConditions<T>[] = {},
   searchKeys?: (keyof T)[],
+  relations = [],
 ) => {
   const whereFilter: any = { ...where };
 
@@ -27,6 +28,7 @@ export const filterRepository = async <T>(
     where: whereFilter,
     skip: filterDto.offset,
     take: filterDto.limit,
+    relations,
   });
   return {
     data: result[0],
@@ -41,8 +43,9 @@ export const filterUserBaseRespository = <T>(
   where: ObjectLiteral | FindConditions<T> | FindConditions<T>[] = {},
   searchKeys?: (keyof T)[],
   user?: User,
+  relations = [],
 ) => {
   const w: any = { ...where };
   if (user) w.user = user;
-  return filterRepository<T>(entity, filterDto, w, searchKeys);
+  return filterRepository<T>(entity, filterDto, w, searchKeys, relations);
 };

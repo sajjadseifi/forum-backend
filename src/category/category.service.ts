@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FilterDto } from 'src/common/dto/filter.dto';
+import { paginationResult } from 'src/common/filter/pagination';
+import { Forum } from 'src/forum/forum.entity';
 import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { Category } from './category.entity';
@@ -16,6 +18,8 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Forum)
+    private readonly forumRepository: Repository<Forum>,
   ) {}
 
   findCategoryByName(categoryName: string) {
@@ -78,14 +82,32 @@ export class CategoryService {
     return reuslt.affected > 0;
   }
 
-  async deleteCategoryByID(categoryId: string): Promise<[boolean, Category]> {
+  async deleteCategoryByID(categoryId: string): Promise<any> {
     const category = await this.getCategory(categoryId);
 
+    const res = await this.forumRepository.update(
+      {
+        category,
+      },
+      {
+        category: null,
+      },
+    );
     const reuslt = await this.categoryRepository.delete(categoryId);
 
-    return [reuslt.affected > 0, category];
+    return {
+      deleted: reuslt.affected > 0,
+      froumCategoryCount: res.affected,
+    };
   }
 
+  async getAll() {
+    const categories = await this.categoryRepository.find({
+      select: ['id', 'name', 'persianName'],
+    });
+
+    return categories;
+  }
   async getByPagination(filterCategoryDto: FilterDto) {
     const { page, size } = filterCategoryDto;
 
@@ -95,7 +117,7 @@ export class CategoryService {
       take: +size,
     });
 
-    return result;
+    return paginationResult(result[0], result[1], filterCategoryDto);
   }
   async isOwnerCateory(user: User, categoryId: string) {
     const category = await this.categoryRepository.findOne({

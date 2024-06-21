@@ -16,7 +16,7 @@ export class JwtService {
     try {
       return jwt.verify(token, this.options.privateKey);
     } catch (error) {
-      throw new UnauthorizedException('Token is Invalid.');
+      throw new UnauthorizedException('شما باید ابتدا وارد سایت شوید');
     }
   }
 }

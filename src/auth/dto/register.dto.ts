@@ -44,13 +44,14 @@ export class RegisterAuthDTO {
 
 export class RegisterOutputDTO extends ResponseDto {
   userId: string;
-
-  constructor(data: string | string[]) {
+  registeredToken?: string;
+  constructor(data: string | string[], registeredToken?: string) {
     if (typeof data === 'string') {
       super(true);
       this.userId = data;
     } else {
       super(false, data);
     }
+    this.registeredToken = registeredToken;
   }
 }

@@ -1,7 +1,12 @@
-import { createQueryBuilder, getConnection, SelectQueryBuilder } from 'typeorm';
+import {
+  createQueryBuilder,
+  EntityTarget,
+  getConnection,
+  SelectQueryBuilder,
+} from 'typeorm';
 
 export const countRepository = async <T = any>(
-  entityClass: string,
+  entityClass: string | EntityTarget<T>,
   whereKey: string,
   value: any,
   callback?: (query: SelectQueryBuilder<any>) => {},
